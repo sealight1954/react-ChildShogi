@@ -62,17 +62,17 @@ class Game extends React.Component {
     super(props);
     let squares= Array(9).fill(null);
     squares[0] = {character: { team:0, name: 'し'}, location: 0};
-    squares[1] = {character: { team:0, name: 'Te'}, location: 1};
-    squares[2] = {character: { team:0, name: 'Gi'}, location: 2};
+    squares[1] = {character: { team:0, name: 'て'}, location: 1};
+    squares[2] = {character: { team:0, name: 'ぎ'}, location: 2};
     squares[3] = {character: null, location: 3};
-    squares[4] = {character: { team:0, name: 'Ta'}, location: 4};
+    squares[4] = {character: { team:0, name: 'た'}, location: 4};
     squares[5] = {character: null, location: 5};
     squares[6] = {character: null, location: 6};
-    squares[7] = {character: { team:1, name: 'Ze'}, location: 7};
+    squares[7] = {character: { team:1, name: 'ぜ'}, location: 7};
     squares[8] = {character: null, location: 8};
-    squares[9] = {character: { team:1, name: 'Ob'}, location: 9};
-    squares[10] = {character: { team:1, name: 'Ky'}, location: 10};
-    squares[11] = {character: { team:1, name: 'Mu'}, location: 11};
+    squares[9] = {character: { team:1, name: 'お'}, location: 9};
+    squares[10] = {character: { team:1, name: 'き'}, location: 10};
+    squares[11] = {character: { team:1, name: 'む'}, location: 11};
     
     this.state ={
       history: [{
@@ -93,11 +93,43 @@ class Game extends React.Component {
     // 利点2: 変更の検知が容易(常にimmutableな書き方をしていれば、objectが別であるかどうかを検査すれば良い)
     let history_length = this.state.history.length;
     let newchoice = this.state.history[history_length - 1].squares[i];
+    // let newchoice_shallow = this.state.history[history_length - 1].squares[i];
+    // let newchoice
+    // if (newchoice_shallow.character){
+    //   newchoice = {
+    //     character: {
+    //       team: newchoice_shallow.character.team,
+    //       name: newchoice_shallow.character.name
+    //     },
+    //     location: newchoice_shallow.location
+    //   }
+    // }else{
+    //   newchoice = {
+    //     character: null,
+    //     location: newchoice_shallow.location
+    //   }
+    // }
     if (newchoice.character != null && ((newchoice.character.team == 0) == this.state.zeroIsNext)){ // 
       // setStateが必要？ See: https://ja.reactjs.org/docs/state-and-lifecycle.html
-      this.state.choice.source = newchoice;
-      this.state.choice.target = null
+      this.setState({
+        choice: {
+          source: newchoice,
+          target: null
+        }
+      })
+      // this.state.choice.source = newchoice;
+      // this.state.choice.target = null
     }else if(this.state.choice.source != null){ // すでにsourceが選択済みならtargetを選択
+      // TODO: これが動かない。targetがnullになる
+      // また、次に来た時sourceがundefinedになる。
+      // this.setState(function(state) {
+      //   return {
+      //     choice: {
+      //       souce: state.choice.source,
+      //       target: {character: null, location: 5}
+      //     }
+      //   };
+      // })
       this.state.choice.target = newchoice
     }
     // 移動判定
