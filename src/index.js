@@ -1,4 +1,5 @@
 import React from 'react';
+import _ from "lodash"
 import ReactDOM from 'react-dom';
 import './index.css';
 
@@ -63,7 +64,7 @@ class Game extends React.Component {
     let squares= Array(9).fill(null);
     squares[0] = {character: { team:0, name: 'し'}, location: 0};
     squares[1] = {character: { team:0, name: 'て'}, location: 1};
-    squares[2] = {character: { team:0, name: 'ぎ'}, location: 2};
+    squares[2] = {character: { team:0, name: 'ゆ'}, location: 2};
     squares[3] = {character: null, location: 3};
     squares[4] = {character: { team:0, name: 'た'}, location: 4};
     squares[5] = {character: null, location: 5};
@@ -81,33 +82,39 @@ class Game extends React.Component {
       stepNumber: 0,
       zeroIsNext: true,
       currentChoice: null,
-      choice: {
-        source: null,
-        target: null
-      }
+      choice: null
     }
   }
   handleClick(i) {
     // sliceしコピーを生成する。immutableな書き方。
     // 利点1: historyなどを作りやすい
     // 利点2: 変更の検知が容易(常にimmutableな書き方をしていれば、objectが別であるかどうかを検査すれば良い)
-    let history_length = this.state.history.length;
-    let newchoice = this.state.history[history_length - 1].squares[i];
+    // let history_length = this.state.history.length;
+    let newchoice = this.state.history[this.state.stepNumber].squares[i];
     // let newchoice_shallow = this.state.history[history_length - 1].squares[i];
     if (newchoice.character != null && ((newchoice.character.team == 0) == this.state.zeroIsNext)){ // 
-      // setStateが必要？ See: https://ja.reactjs.org/docs/state-and-lifecycle.html
+      // See: https://ja.reactjs.org/docs/state-and-lifecycle.html
       // SetState()のReference: https://ja.reactjs.org/docs/react-component.html#setstate
+      // Note: おそらく、choice: newchoiceではなく、deep copyを作る必要。historyの話。
       this.setState((state) => {
         return {
-          choice: newchoice
+          choice: {
+            character: {
+              team: newchoice.character.team,
+              name: newchoice.character.name
+            },
+            location: newchoice.location
+          }
         }
       });
     }else if(this.state.choice != null){ // すでにsourceが選択済みならtargetを選択
       this.setState(function(state) {
         const history = this.state.history.slice(0, this.state.stepNumber + 1);
         const current = history[history.length - 1];
-
-        const squares = current.squares.slice();
+        
+        // Need deep copy
+        // See: https://js.plainenglish.io/how-to-deep-copy-objects-and-arrays-in-javascript-7c911359b089
+        const squares = _.cloneDeep(current.squares);
         // this.state.choice.target.character = this.state.choice.character;
         // this.state.choice.character = null;
         squares[newchoice.location].character = {
@@ -153,9 +160,8 @@ class Game extends React.Component {
     let status;
     if (winner ) {
       status = 'Winner '+ winner;
-    
     } else {
-      status = 'Next player: ' + (this.state.zeroIsNext ? 'X': 'O');
+      status = 'Next player: ' + (this.state.zeroIsNext ? '0': '1');
 
     }
     return (
@@ -245,19 +251,19 @@ const movable = {
   ]
 }
 const role_map = {
-  Sh: 'hisha', 
-  Mu: 'hisha',
-  Ob: 'hisha',
-  Te: 'ou',
-  Gy: 'ou',
-  Ky: 'ou',
-  Ta: 'ho',
-  Ze: 'ho',
-  Ne: 'ho',
-  In: 'ho',
-  Gi: 'kaku',
-  Sa: 'kaku',
-  Mi: 'kaku'
+  "し": 'hisha', // しのぶ
+  "む": 'hisha', // むいちろう
+  "お": 'hisha', // おばない
+  "て": 'ou', // てんげん
+  "ぎ": 'ou', // ぎょうめい
+  "き": 'ou', // きょうじゅうろう
+  "た": 'ho', // たんじろう
+  "ぜ": 'ho', // ぜんいつ
+  "ね": 'ho', // ねづこ
+  "い": 'ho', // いのすけ
+  "ゆ": 'kaku', // ぎゆう
+  "さ": 'kaku', // さねみ
+  "み": 'kaku' // みつり
 }
 
 function getMovable(choice) {
