@@ -94,77 +94,40 @@ class Game extends React.Component {
     let history_length = this.state.history.length;
     let newchoice = this.state.history[history_length - 1].squares[i];
     // let newchoice_shallow = this.state.history[history_length - 1].squares[i];
-    // let newchoice
-    // if (newchoice_shallow.character){
-    //   newchoice = {
-    //     character: {
-    //       team: newchoice_shallow.character.team,
-    //       name: newchoice_shallow.character.name
-    //     },
-    //     location: newchoice_shallow.location
-    //   }
-    // }else{
-    //   newchoice = {
-    //     character: null,
-    //     location: newchoice_shallow.location
-    //   }
-    // }
     if (newchoice.character != null && ((newchoice.character.team == 0) == this.state.zeroIsNext)){ // 
       // setStateが必要？ See: https://ja.reactjs.org/docs/state-and-lifecycle.html
-      this.setState({
-        choice: {
-          source: newchoice,
-          target: null
-        }
-      })
-      // this.state.choice.source = newchoice;
-      // this.state.choice.target = null
-    }else if(this.state.choice.source != null){ // すでにsourceが選択済みならtargetを選択
-      // TODO: これが動かない。targetがnullになる
-      // また、次に来た時sourceがundefinedになる。
-      // this.setState(function(state) {
-      //   return {
-      //     choice: {
-      //       souce: state.choice.source,
-      //       target: {character: null, location: 5}
-      //     }
-      //   };
-      // })
-      this.state.choice.target = newchoice
-    }
-    // 移動判定
-    if(this.state.choice.source != null && this.state.choice.target !=null){
-      // source -> targetの移動が可能か
-      const history = this.state.history.slice(0, this.state.stepNumber + 1);
-      const current = history[history.length - 1];
-
-      const squares = current.squares.slice();
-      // this.state.choice.target.character = this.state.choice.source.character;
-      // this.state.choice.source.character = null;
-      squares[this.state.choice.target.location].character = {
-        team: this.state.choice.source.character.team,
-        name: this.state.choice.source.character.name
-      }
-      squares[this.state.choice.source.location].character = null;
-
-      // if (calculateWinner(squares) || squares[i]){
-      //   return;
-      // }
-      // squares[i] = this.state.zeroIsNext ? 'X' : 'O';
-      this.setState({
-        // これもimmutableな書き方？
-        history: history.concat(
-        [{
-          squares: squares,
-        }] 
-        ),
-        stepNumber: history.length,
-        zeroIsNext: !this.state.zeroIsNext,
-        choice: {
-          source: null,
-          target: null
+      // SetState()のReference: https://ja.reactjs.org/docs/react-component.html#setstate
+      this.setState((state) => {
+        return {
+          choice: newchoice
         }
       });
+    }else if(this.state.choice != null){ // すでにsourceが選択済みならtargetを選択
+      this.setState(function(state) {
+        const history = this.state.history.slice(0, this.state.stepNumber + 1);
+        const current = history[history.length - 1];
+
+        const squares = current.squares.slice();
+        // this.state.choice.target.character = this.state.choice.character;
+        // this.state.choice.character = null;
+        squares[newchoice.location].character = {
+          team: this.state.choice.character.team,
+          name: this.state.choice.character.name
+        }
+        squares[this.state.choice.location].character = null;
+
+        return {
+          // これもimmutableな書き方？
+          history: history.concat(
+          [{
+            squares: squares,
+          }] 
+          ),
+          stepNumber: history.length,
+          zeroIsNext: !this.state.zeroIsNext,
+          choice: null
+        };
+      })
     }
   }
   jumpTo(step) {
