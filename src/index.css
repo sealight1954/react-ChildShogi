@@ -32,6 +32,12 @@ ol, ul {
   width: 34px;
 }
 
+.team_zero {
+  /* https://developer.mozilla.org/ja/docs/Web/CSS/transform */
+  transform: rotate(0.5turn);
+}
+
+
 .square:focus {
   outline: none;
 }

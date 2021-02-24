@@ -3,10 +3,66 @@ import _ from "lodash"
 import ReactDOM from 'react-dom';
 import './index.css';
 
+// x,y
+const movable = {
+  kaku: [
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1]
+  ],
+  hisha: [
+    [0, 1],
+    [1, 0],
+    [0, -1],
+    [-1, 0]
+  ],
+  ou: [
+    [0, 1],
+    [1, 1],
+    [1, 0],
+    [1, -1],
+    [0, -1],
+    [-1, -1],
+    [-1, 0],
+    [-1, 1]
+  ],
+  ho: [
+    [0, 1]
+  ],
+  kin: [
+    [1, 0],
+    [1, 1],
+    [0, 1],
+    [-1, 1],
+    [-1, 0],
+    [0, -1]
+  ]
+}
+const role_map = {
+  "し": 'hisha', // しのぶ
+  "む": 'hisha', // むいちろう
+  "お": 'hisha', // おばない
+  "て": 'ou', // てんげん
+  "ぎ": 'ou', // ぎょうめい
+  "き": 'ou', // きょうじゅうろう
+  "た": 'ho', // たんじろう
+  "ぜ": 'ho', // ぜんいつ
+  "ね": 'ho', // ねづこ
+  "い": 'ho', // いのすけ
+  "ゆ": 'kaku', // ぎゆう
+  "さ": 'kaku', // さねみ
+  "み": 'kaku' // みつり
+}
+
 function Square (props) {
+  let class_name = "square"
+  if (props.is_team_zero ) {
+    class_name += " team_zero";
+  }
   return (
     // <button className="square" onClick={function() {alert('click');}}>
-    <button className="square" 
+    <button className={class_name} 
       // props.onClick()を呼び出す。Squareは関数の呼び出しを受け取っている。
       // thisがいらない
       onClick={() => props.onClick()}
@@ -25,14 +81,33 @@ class Board extends React.Component {
         value={this.props.squares[i].character ? this.props.squares[i].character.name : null}
         // onClick()をpropsとしてSquareに渡す。
         onClick={()=>this.props.onClick(i)}
+        is_team_zero={this.props.squares[i].character ? (this.props.squares[i].character.team == 0 ? true : false) : false}
       />
     );
+  }
+  renderZeroStock(){
+    return null;
+    if (this.state.zero_stock.length == 0){
+      return null
+    }else{
+      return (
+        <div>
+          {this.renderSquare(10)}
+        </div>
+      )
+    }
   }
 
   render() {
 
     return (
+      
       <div>
+      <div>
+        {this.renderZeroStock()}
+      </div>
+      <div>
+
         <div className="board-row">
           {this.renderSquare(0)}
           {this.renderSquare(1)}
@@ -52,6 +127,7 @@ class Board extends React.Component {
           {this.renderSquare(9)}
           {this.renderSquare(10)}
           {this.renderSquare(11)}
+        </div>
         </div>
       </div>
     );
@@ -74,10 +150,14 @@ class Game extends React.Component {
     squares[9] = {character: { team:1, name: 'お'}, location: 9};
     squares[10] = {character: { team:1, name: 'き'}, location: 10};
     squares[11] = {character: { team:1, name: 'む'}, location: 11};
+    let zero_stock = Array(0);
+    let one_stock = Array(0);
     
     this.state ={
       history: [{
         squares: squares,
+        zero_stock: zero_stock,
+        one_stock: one_stock
       }],
       stepNumber: 0,
       zeroIsNext: true,
@@ -189,23 +269,29 @@ ReactDOM.render(
 );
 
 function calculateWinner(squares) {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-  for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
+  let is_zero_leader_alive = squares.some(
+    (element, index, array) => {
+      return element.character ? role_map[element.character.name] == 'ou' && element.character.team == 0 : false;
+    }
+  );
+  let is_one_leader_alive = squares.some(
+    (element, index, array) => {
+      return element.character ? role_map[element.character.name] == 'ou' && element.character.team == 1 : false;
+    }
+  );
+  if (is_one_leader_alive) {
+    if (is_zero_leader_alive) {
+      return null;
+    }else{
+      return '1';
+    }
+  }else{
+    if(is_zero_leader_alive) {
+      return '0'
+    }else{
+      return null;
     }
   }
-  return null;
 }
 function idxToPosition(idx) {
   let res = {x: idx % 3, y: idx / 3 | 0}
@@ -214,57 +300,7 @@ function idxToPosition(idx) {
 function positionToidx(x, y) {
   return 3 * y + x
 }
-// x,y
-const movable = {
-  kaku: [
-    [1, 1],
-    [1, -1],
-    [-1, 1],
-    [-1, -1]
-  ],
-  hisha: [
-    [0, 1],
-    [1, 0],
-    [0, -1],
-    [-1, 0]
-  ],
-  ou: [
-    [0, 1],
-    [1, 1],
-    [1, 0],
-    [1, -1],
-    [0, -1],
-    [-1, -1],
-    [-1, 0],
-    [-1, 1]
-  ],
-  ho: [
-    [0, 1]
-  ],
-  kin: [
-    [1, 0],
-    [1, 1],
-    [0, 1],
-    [-1, 1],
-    [-1, 0],
-    [0, -1]
-  ]
-}
-const role_map = {
-  "し": 'hisha', // しのぶ
-  "む": 'hisha', // むいちろう
-  "お": 'hisha', // おばない
-  "て": 'ou', // てんげん
-  "ぎ": 'ou', // ぎょうめい
-  "き": 'ou', // きょうじゅうろう
-  "た": 'ho', // たんじろう
-  "ぜ": 'ho', // ぜんいつ
-  "ね": 'ho', // ねづこ
-  "い": 'ho', // いのすけ
-  "ゆ": 'kaku', // ぎゆう
-  "さ": 'kaku', // さねみ
-  "み": 'kaku' // みつり
-}
+
 
 function getMovable(choice) {
   if (choice.character == null) {
