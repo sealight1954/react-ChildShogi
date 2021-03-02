@@ -3,6 +3,7 @@ import _ from "lodash"
 import ReactDOM from 'react-dom';
 import './index.css';
 
+const board_size = 12;
 // x,y
 const movable = {
   kaku: [
@@ -92,7 +93,7 @@ class Board extends React.Component {
     }else{
       return (
         <div>
-          {this.props.squares.slice(12, 12 + this.props.zero_stock).map(
+          {this.props.squares.slice(board_size, board_size + this.props.zero_stock).map(
             (i) =>
             this.renderSquare(i.location)
           )}
@@ -107,7 +108,7 @@ class Board extends React.Component {
     }else{
       return (
         <div>
-          {this.props.squares.slice(12+ this.props.zero_stock, 12 + this.props.zero_stock + this.props.one_stock).map(
+          {this.props.squares.slice(board_size + this.props.zero_stock, board_size + this.props.zero_stock + this.props.one_stock).map(
             (i) =>
             this.renderSquare(i.location)
           )}
@@ -159,8 +160,8 @@ class Board extends React.Component {
 class Game extends React.Component {
   constructor(props) {
     super(props);
-    let squares= Array(12).fill(null);
-    squares[0] = {character: { team:0, name: 'し'}, location: 0};
+    let squares= Array(board_size).fill(null);
+    squares[0] = {character: { team:0, name: 'む'}, location: 0};
     squares[1] = {character: { team:0, name: 'て'}, location: 1};
     squares[2] = {character: { team:0, name: 'ゆ'}, location: 2};
     squares[3] = {character: null, location: 3};
@@ -169,16 +170,17 @@ class Game extends React.Component {
     squares[6] = {character: null, location: 6};
     squares[7] = {character: { team:1, name: 'ぜ'}, location: 7};
     squares[8] = {character: null, location: 8};
-    squares[9] = {character: { team:1, name: 'お'}, location: 9};
+    squares[9] = {character: { team:1, name: 'さ'}, location: 9};
     squares[10] = {character: { team:1, name: 'き'}, location: 10};
-    squares[11] = {character: { team:1, name: 'む'}, location: 11};
+    squares[11] = {character: { team:1, name: 'し'}, location: 11};
     // 12- is allocated for stocks.
-    squares[12] = {character: { team:0, name: 'き'}, location: 12}; // Debug
-    squares[13] = {character: { team:0, name: 'き'}, location: 13}; // Debug
-    squares[14] = {character: { team:0, name: 'き'}, location: 14}; // Debug
-    squares[15] = {character: { team:0, name: 'き'}, location: 15}; // Debug
+    // squares[12] = {character: { team:0, name: 'き'}, location: 12}; // Debug
+    // squares[13] = {character: { team:0, name: 'き'}, location: 13}; // Debug
+    // squares[14] = {character: { team:0, name: 'き'}, location: 14}; // Debug
+    // squares[15] = {character: { team:0, name: 'き'}, location: 15}; // Debug
     // stores # of stocks
-    let zero_stock = 4; // Debug
+    // let zero_stock = 4; // Debug
+    let zero_stock = 0;
     let one_stock = 0;
     
     this.state ={
@@ -193,13 +195,46 @@ class Game extends React.Component {
       choice: null
     }
   }
+  getMovable(choice) {
+    if (choice.character == null) {
+      return null
+    }
+    let is_stock = choice.location >= board_size;
+    // TODO: 変数の定義の方法がReasnableか考える。
+    let r = choice.character.team == 1 ? -1 : 1;
+    let c = idxToPosition(choice.location);
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length - 1];
+    const squares = _.cloneDeep(current.squares);
+    let my_movable = is_stock ? 
+      squares.slice(0, board_size).filter((item) => 
+        item.character == null
+      ).map((item) => 
+        item.location
+      ) :
+      movable[role_map[choice.character.name]].map(
+        function(x) { 
+          return [x[0] * r + c.x, x[1] * r + c.y];}
+      ).filter(x => x[0] >= 0 && x[0] < 3 && x[1] >= 0 && x[1] < 3
+      ).map(
+        (item) => positionToidx(...item)
+      ).filter(x =>
+        // 味方のいないマス
+        squares[x].character == null || 
+        (squares[x].character.team == 0) != this.state.zeroIsNext
+      )
+    return my_movable
+    // https://stackoverflow.com/questions/58128952/how-to-skip-appending-some-condition-in-map-scala
+    // return movable.map(x => [x[0] * rotate_factor, x[1] * rotate_factor])
+  }
   handleClick(i) {
     // sliceしコピーを生成する。immutableな書き方。
     // 利点1: historyなどを作りやすい
     // 利点2: 変更の検知が容易(常にimmutableな書き方をしていれば、objectが別であるかどうかを検査すれば良い)
     // let history_length = this.state.history.length;
     let newchoice = this.state.history[this.state.stepNumber].squares[i];
-    if (newchoice.character != null && ((newchoice.character.team == 0) == this.state.zeroIsNext)){ // 
+    if (newchoice.character != null && ((newchoice.character.team == 0) == this.state.zeroIsNext)){ 
+      // 自チームのキャラを選択した時 => sourceとして選択
       // See: https://ja.reactjs.org/docs/state-and-lifecycle.html
       // SetState()のReference: https://ja.reactjs.org/docs/react-component.html#setstate
       // Note: おそらく、choice: newchoiceではなく、deep copyを作る必要。historyの話。
@@ -216,24 +251,50 @@ class Game extends React.Component {
       });
     }else if(this.state.choice != null){ // すでにsourceが選択済みならtargetを選択
       // TODO: sourceが動けるところか。 この関数にもちゴマ投入の動ける場所も書く？
+      if (! this.getMovable(this.state.choice).includes(newchoice.location)){
+        return
+      }
       // TODO: targetに相手ゴマいるか。いるなら自ストックに加える処理。このときzero/one_stockをincrementすること。
+      // キャラがいない、かつ、相手チーム
+      let is_take_opponent = (newchoice.character != null) && this.state.zeroIsNext != (newchoice.character.team == 0)
       // TODO: sourceがもちゴマなら、squaresからdeleteして、zero/one_stockをdecrementすること。
+      let is_from_stock = this.state.choice.location >= board_size;
       this.setState(function(state) {
+        // thisでなくstateからもらうのでは？
         const history = this.state.history.slice(0, this.state.stepNumber + 1);
         const current = history[history.length - 1];
-        
         // Need deep copy
         // See: https://js.plainenglish.io/how-to-deep-copy-objects-and-arrays-in-javascript-7c911359b089
-        const squares = _.cloneDeep(current.squares);
+        let squares = _.cloneDeep(current.squares);
         let zero_stock = current.zero_stock
         let one_stock = current.one_stock
+        if (is_take_opponent){
+          let insert_idx = this.state.zeroIsNext ? board_size + zero_stock : board_size + zero_stock + one_stock;
+          // TODO: squaresでなくcurrentを入れるようにすればzero_stockをinsert関数内で実施可能
+          squares = insertIntoSquares(squares, insert_idx, 
+            {character: {name: squares[newchoice.location].character.name, team: !squares[newchoice.location].character.team}, location: insert_idx})
+          if(this.state.zeroIsNext){
+            zero_stock += 1
+          }else{
+            one_stock += 1
+          }
+        }else if(is_from_stock){
+          squares = removeFromSquares(squares, this.state.choice.location);
+          if(this.state.zeroIsNext){
+            zero_stock -= 1
+          }else{
+            one_stock -= 1
+          }
+        }
         // this.state.choice.target.character = this.state.choice.character;
         // this.state.choice.character = null;
         squares[newchoice.location].character = {
           team: this.state.choice.character.team,
           name: this.state.choice.character.name
         }
-        squares[this.state.choice.location].character = null;
+        if(!is_from_stock){
+          squares[this.state.choice.location].character = null;
+        }
 
         return {
           // これもimmutableな書き方？
@@ -257,6 +318,7 @@ class Game extends React.Component {
       zeroIsNext: (step % 2) === 0,
     });
   }
+
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
@@ -337,15 +399,21 @@ function positionToidx(x, y) {
   return 3 * y + x
 }
 
-
-function getMovable(choice) {
-  if (choice.character == null) {
-    return null
-  }
-  let my_movable = movable[role_map[choice.character.name]];
-  let r = choice.character.team == 1 ? 1 : -1;
-  let c = idxToPosition(choice.location);
-  return my_movable.map(x => [x[0] * r + c.x, x[1] * r + c.y]).filter(x => x[0] >= 0 && x[0] < 3 && x[1] >= 0 && x[1] < 3)
-  // https://stackoverflow.com/questions/58128952/how-to-skip-appending-some-condition-in-map-scala
-  // return movable.map(x => [x[0] * rotate_factor, x[1] * rotate_factor])
+function insertIntoSquares(array, index, newItem) {
+  // locationを修正する点が異なる。
+  return [
+      ...array.slice(0, index),
+      newItem,
+      ...array.slice(index).map(item => {return {character: item.character, location: item.location + 1}})
+  ];
 }
+function removeFromSquares(array, index) {
+  return [
+    ...array.slice(0, index),
+    ...array.slice(index + 1).map(item =>
+
+      {return {character: item.character, location: item.location - 1}}
+      )
+  ]
+}
+
