@@ -207,11 +207,13 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = _.cloneDeep(current.squares);
     let my_movable = is_stock ? 
+      // ストックから出す時
       squares.slice(0, board_size).filter((item) => 
         item.character == null
       ).map((item) => 
         item.location
       ) :
+      // 盤上のコマを動かす時
       movable[role_map[choice.character.name]].map(
         function(x) { 
           return [x[0] * r + c.x, x[1] * r + c.y];}
@@ -261,7 +263,7 @@ class Game extends React.Component {
       let is_from_stock = this.state.choice.location >= board_size;
       this.setState(function(state) {
         // thisでなくstateからもらうのでは？
-        const history = this.state.history.slice(0, this.state.stepNumber + 1);
+        const history = state.history.slice(0, state.stepNumber + 1);
         const current = history[history.length - 1];
         // Need deep copy
         // See: https://js.plainenglish.io/how-to-deep-copy-objects-and-arrays-in-javascript-7c911359b089
@@ -269,31 +271,31 @@ class Game extends React.Component {
         let zero_stock = current.zero_stock
         let one_stock = current.one_stock
         if (is_take_opponent){
-          let insert_idx = this.state.zeroIsNext ? board_size + zero_stock : board_size + zero_stock + one_stock;
+          let insert_idx = state.zeroIsNext ? board_size + zero_stock : board_size + zero_stock + one_stock;
           // TODO: squaresでなくcurrentを入れるようにすればzero_stockをinsert関数内で実施可能
           squares = insertIntoSquares(squares, insert_idx, 
             {character: {name: squares[newchoice.location].character.name, team: !squares[newchoice.location].character.team}, location: insert_idx})
-          if(this.state.zeroIsNext){
+          if(state.zeroIsNext){
             zero_stock += 1
           }else{
             one_stock += 1
           }
         }else if(is_from_stock){
-          squares = removeFromSquares(squares, this.state.choice.location);
-          if(this.state.zeroIsNext){
+          squares = removeFromSquares(squares, state.choice.location);
+          if(state.zeroIsNext){
             zero_stock -= 1
           }else{
             one_stock -= 1
           }
         }
-        // this.state.choice.target.character = this.state.choice.character;
-        // this.state.choice.character = null;
+        // state.choice.target.character = state.choice.character;
+        // state.choice.character = null;
         squares[newchoice.location].character = {
-          team: this.state.choice.character.team,
-          name: this.state.choice.character.name
+          team: state.choice.character.team,
+          name: state.choice.character.name
         }
         if(!is_from_stock){
-          squares[this.state.choice.location].character = null;
+          squares[state.choice.location].character = null;
         }
 
         return {
@@ -306,7 +308,7 @@ class Game extends React.Component {
           }] 
           ),
           stepNumber: history.length,
-          zeroIsNext: !this.state.zeroIsNext,
+          zeroIsNext: !state.zeroIsNext,
           choice: null
         };
       })
