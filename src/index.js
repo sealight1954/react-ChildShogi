@@ -4,6 +4,8 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 const board_size = 12;
+const board_width = 3;
+const board_height = 4;
 // x,y
 const movable = {
   kaku: [
@@ -217,7 +219,7 @@ class Game extends React.Component {
       movable[role_map[choice.character.name]].map(
         function(x) { 
           return [x[0] * r + c.x, x[1] * r + c.y];}
-      ).filter(x => x[0] >= 0 && x[0] < 3 && x[1] >= 0 && x[1] < 3
+      ).filter(x => x[0] >= 0 && x[0] < board_width && x[1] >= 0 && x[1] < board_height
       ).map(
         (item) => positionToidx(...item)
       ).filter(x =>
@@ -394,11 +396,11 @@ function calculateWinner(squares) {
   }
 }
 function idxToPosition(idx) {
-  let res = {x: idx % 3, y: idx / 3 | 0}
+  let res = {x: idx % board_width, y: idx / board_width | 0}
   return res
 }
 function positionToidx(x, y) {
-  return 3 * y + x
+  return board_width * y + x
 }
 
 function insertIntoSquares(array, index, newItem) {
